@@ -93,6 +93,13 @@ textarea{min-height:70px;resize:vertical}
 .law .lm{font-size:12px;color:var(--muted);grid-column:1}
 .law button{grid-row:1 / 5;grid-column:2;align-self:center}
 .law .how{grid-column:1}
+.endbtn{flex:0 0 auto}
+.gameover{background:linear-gradient(160deg,#f6e3a6,#e8b93c);color:var(--gold-ink);border:0}
+.gameover .eyebrow{color:inherit;opacity:.75}
+.gameover h2{font-family:"Bricolage Grotesque",sans-serif;font-size:30px;line-height:1.1;margin:0}
+.gameover p{margin:0;font-weight:700}
+.gameover button{background:rgba(26,20,5,.08);color:var(--gold-ink);border-color:rgba(26,20,5,.25)}
+.gameover button#rematch{background:var(--gold-ink);color:var(--gold);border-color:var(--gold-ink)}
 .sheet{position:fixed;inset:0;z-index:40;background:var(--bg);overflow-y:auto;-webkit-overflow-scrolling:touch;overscroll-behavior:contain;padding:calc(10px + env(safe-area-inset-top,0px)) 16px calc(28px + env(safe-area-inset-bottom,0px))}
 .sin{max-width:600px;margin:0 auto;display:flex;flex-direction:column;gap:12px}
 .shead{display:flex;align-items:flex-start;gap:12px;position:sticky;top:calc(-10px - env(safe-area-inset-top,0px));z-index:1;background:var(--bg);padding:10px 0 8px}
@@ -561,6 +568,7 @@ function setupView(){
 }
 
 function gameView(){
+  if (state.over) return overView();
   const n = state.rounds.length, rk = currentRanks(), np = state.players.length;
   let cabinet;
   if (!rk){
@@ -590,7 +598,7 @@ function gameView(){
         <span class="lm">${l.by!=null?`Enacted by ${N(l.by)}`:"Enacted"}${l.round?` · round ${l.round}`:" · before round 1"}</span>
         <button class="small" id="repeal-${i}" data-act="repeal" data-i="${i}">Repeal</button></div>`; }).join("")}</div></div>` : "";
 
-  const roundBtn = entry ? entryView() : `<button class="primary" data-act="newRound" id="newRound">Record round ${n+1} results</button>`;
+  const roundBtn = entry ? entryView() : `<div class="btnrow"><button class="primary" data-act="newRound" id="newRound">Record round ${n+1} results</button>${n ? `<button class="endbtn" data-act="endgame" id="endgame">${confirmKey==="end"?"Tap to end":"🏁 End game"}</button>` : ""}</div>`;
 
   let history = "";
   if (n){
@@ -600,8 +608,24 @@ function gameView(){
       <p class="hint">Newest first. Tap a round to fix the order.</p></div>`;
   }
   history += statsView();
-  const reset = `<div class="btnrow">${hx.shareButton("Share standings", "small ghost")}<button class="small ghost" data-act="newgame" id="newgame">${confirmKey==="new"?"Tap to confirm":"New game"}</button></div>`;
+  const reset = n ? `<div class="btnrow">${hx.shareButton("Share standings", "small ghost")}<button class="small ghost" data-act="endgame" id="endgame2">${confirmKey==="end"?"Tap again to end the game":"🏁 End game"}</button></div>`
+    : `<div class="btnrow"><button class="small ghost" data-act="newgame" id="newgame">${confirmKey==="new"?"Tap to confirm":"Change players"}</button></div>`;
   return cabinet + roundBtn + drawBox + laws + history + reset;
+}
+
+// After End game: who won (most times President, as in the stats), saved in History, and what's next
+function overView(){
+  const n = state.rounds.length, P = state.players.map((_, i) => i), r = R();
+  const t = P.map(i => state.rounds.filter(x => x.order[0] === i).length), best = Math.max(...t), win = P.filter(i => t[i] === best);
+  const rest = P.filter(i => !win.includes(i)).sort((a, b) => t[b] - t[a] || a - b);
+  const times = k => k === 1 ? "once" : `${k} times`;
+  return `<div class="panel gameover"><span class="eyebrow">Game over · ${plural(n, "round")}</span>
+    <h2>${win.length > 1 ? `Tie: ${win.map(N).join(" &amp; ")}` : `${N(win[0])} wins`}</h2>
+    <p>${r.pres} ${times(best)}${win.length > 1 ? " each" : ", more than anyone"}.</p>
+    ${rest.length ? `<div class="num">${rest.map(i => `${N(i)} ${t[i]}`).join(" · ")}</div>` : ""}
+    ${hx.saved()}
+    <div class="btnrow"><button data-act="rematch" id="rematch">Rematch, same players</button><button data-act="newsetup" id="newsetup">New players</button></div>
+    <button class="small ghost" data-act="unend" id="unend">Oops, keep playing</button></div>` + statsView();
 }
 
 function drawModeText(){
@@ -839,7 +863,7 @@ document.addEventListener("click", e => {
     case "clearRule": state.clearOnNew = !state.clearOnNew; save(); render(); break;
     case "start":
       state.players = Array.from({length:state.count},(_,i)=> (state.names[i]||"").trim() || `Player ${i+1}`);
-      state.rounds = []; state.laws = []; state.lawLog = []; state.phase = "play"; entry = null; drawn = null; stopClock(); save(); render(); keepAwake(); break;
+      state.rounds = []; state.laws = []; state.lawLog = []; state.phase = "play"; state.over = false; entry = null; drawn = null; stopClock(); save(); render(); keepAwake(); break;
     case "newRound": entry = { editing:null, order:[], error:"" }; render(); break;
     case "edit": entry = { editing:+b.dataset.i, order:[...state.rounds[+b.dataset.i].order], error:"" }; render(); document.getElementById("cancel")?.scrollIntoView({block:"start"}); break;
     case "cancel": entry = null; render(); break;
@@ -858,6 +882,10 @@ document.addEventListener("click", e => {
     }
     case "delRound": confirmThen("del", ()=>{ state.rounds.splice(entry.editing,1); entry = null; save(); render(); }); break;
     case "undo": confirmThen("undo", ()=>{ state.rounds.pop(); entry = null; save(); render(); }); break;
+    case "endgame": confirmThen("end", () => { state.over = true; entry = null; drawn = null; picker = null; stopClock(); save(); render(); window.scrollTo(0, 0); }); break;
+    case "unend": state.over = false; save(); render(); break;
+    case "rematch": stopClock(); state.over = false; state.rounds = []; state.laws = []; state.lawLog = []; entry = null; drawn = null; save(); render(); window.scrollTo(0, 0); break;
+    case "newsetup": stopClock(); state.over = false; state.phase = "setup"; state.rounds = []; state.laws = []; state.lawLog = []; entry = null; drawn = null; state.tab = "game"; save(); render(); window.scrollTo(0, 0); break;
     case "newgame": confirmThen("new", ()=>{ stopClock(); state.phase = "setup"; state.rounds = []; state.laws = []; state.lawLog = []; entry = null; drawn = null; state.tab = "game"; save(); render(); }); break;
     case "draw": drawRule(); render(); break;
     case "pickForMe": pickForMe(); render(); break;
@@ -898,7 +926,7 @@ document.addEventListener("input", e => {
 // The app keeps no points and has no game over. Each round records the order players went out; first out is
 // President (the app's rankKey). A round scores 1 for its President, so a game's total is how many times each
 // player was President: the app's 👑 column and its "Commander in chief" award, so the most wins.
-// A game runs until someone taps New game, which finishes it; until then it's In progress.
+// A game runs until someone taps End game (or New players), which finishes it; until then it's In progress.
 const HX = {
   app: "presidents", title: "Presidents", unit: ["round", "rounds"], sideWord: "player", lowWins: false,
   guest: n => /^player \d+$/i.test(String(n).trim()),
@@ -906,10 +934,11 @@ const HX = {
     const P = state.players || [], R = state.rounds || [];
     if (state.phase !== "play" || !P.length || !R.length) return null;
     const np = P.length, deck = allRules(), title = id => { const r = deck.find(x => x.id === id); return r ? r.t : "A deleted house rule"; };
+    const rounds = R.map(r => P.map((_,i) => rankKey(r.order.indexOf(i), np) === "pres" ? 1 : 0)), t = P.map((_,i) => rounds.reduce((a,r) => a + r[i], 0)), best = Math.max(...t);
     return {
       sides: P.map(p => ({ name: p, players: [p] })),
-      rounds: R.map(r => P.map((_,i) => rankKey(r.order.indexOf(i), np) === "pres" ? 1 : 0)),
-      done: false,
+      rounds,
+      done: !!state.over, winners: state.over ? P.map((_,i) => i).filter(i => t[i] === best) : undefined,
       note: (state.style === "vi" ? "Village Idiot · " : "") + "score = times President",
       extra: {
         style: state.style === "vi" ? "vi" : "pa",
