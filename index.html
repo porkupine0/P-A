@@ -82,6 +82,7 @@ textarea{min-height:70px;resize:vertical}
 .drawn .cat{font-size:12px;text-transform:uppercase;letter-spacing:.1em;font-weight:800;opacity:.75}
 .drawn .rt{font-family:"Bricolage Grotesque",sans-serif;font-size:26px;font-weight:800;line-height:1.1}
 .drawn .rd{font-size:16px}
+.drawn .rx{font-size:14px;line-height:1.4;padding-top:8px;border-top:1px solid rgba(26,20,5,.2)}
 .drawn button{background:rgba(26,20,5,.08);color:var(--gold-ink);border-color:rgba(26,20,5,.25)}
 .drawn button.go{background:var(--gold-ink);color:var(--gold);border-color:var(--gold-ink)}
 @media (prefers-reduced-motion:no-preference){.drawn{animation:flip .35s ease-out}@keyframes flip{from{transform:rotateX(70deg);opacity:.2}to{transform:none;opacity:1}}}
@@ -90,7 +91,13 @@ textarea{min-height:70px;resize:vertical}
 .law .lt{font-weight:800}
 .law .ld{font-size:14px;color:var(--muted);grid-column:1}
 .law .lm{font-size:12px;color:var(--muted);grid-column:1}
-.law button{grid-row:1 / 4;grid-column:2;align-self:center}
+.law button{grid-row:1 / 5;grid-column:2;align-self:center}
+.law .how{grid-column:1}
+.how summary{cursor:pointer;font-size:13px;font-weight:700;color:var(--gold);list-style:none;display:inline-flex;align-items:center;gap:4px;padding:4px 0;min-height:28px}
+.how summary::-webkit-details-marker{display:none}
+.how summary::before{content:"▸";transition:transform .15s}
+.how[open] summary::before{transform:rotate(90deg)}
+.how p{margin:2px 0 4px;font-size:14px;line-height:1.45;color:var(--ink)}
 .rlist{display:flex;flex-direction:column}
 .ritem{display:grid;grid-template-columns:auto 1fr auto;gap:2px 10px;align-items:start;padding:12px 0;border-bottom:1px solid var(--line)}
 .ritem:last-child{border-bottom:0}
@@ -191,216 +198,217 @@ const KEY = "presidents-game-v1", PREFS = "presidents-prefs-v1";
 const CROWN = `<svg viewBox="0 0 100 100" aria-hidden="true"><rect width="100" height="100" rx="22" fill="#1d2756"/><path d="M20 66 L17 36 L34 50 L50 26 L66 50 L83 36 L80 66 Z" fill="#e8b93c"/><rect x="20" y="68" width="60" height="9" rx="2" fill="#e8b93c"/><circle cx="50" cy="55" r="5" fill="#c8243a"/></svg>`;
 
 // ---------- the rule deck ----------
+// Each rule: [category, title, what it says, how it works in practice].
 const CATS = {
   talk:"Talk", body:"Body", table:"Table & cards", social:"Social", sips:"Drink mechanics", power:"Presidential power", mini:"Mini-games", wild:"Wild",
 };
 const RULES = [
   // Talk
-  ["talk","No first names","Nobody may say anyone's first name. Slip up and take a sip."],
-  ["talk","Swear jar","Every curse word costs a sip."],
-  ["talk","The D-word","The word “drink” is banned. Call it “a sip of freedom” instead."],
-  ["talk","Pirate law","Everyone talks like a pirate until the next President takes office."],
-  ["talk","The royal we","Everyone refers to themselves only as “we.” Say “I” and sip."],
-  ["talk","Third person","Everyone refers to themselves by name in the third person."],
-  ["talk","No yes, no no","The words “yes” and “no” are banned. Find another way."],
-  ["talk","Question master","The President is question master. Answer any question they ask and you sip, unless you reply with a question of your own."],
-  ["talk","Questions only","Everyone may only speak in questions. Make a statement and sip."],
-  ["talk","Accent decree","The President picks an accent. Everyone speaks in it."],
-  ["talk","No numbers","Nobody may say a number out loud, including card ranks. Show your cards instead."],
-  ["talk","Mr. President","The President must be addressed as “Mr. President” or “Madam President.”"],
-  ["talk","Your Majesty","Every sentence spoken to the President must begin with “Your Majesty.”"],
-  ["talk","Compliment tax","Before you play a card, pay someone a compliment."],
-  ["talk","Sportscaster","Announce every card you play like a play-by-play commentator."],
-  ["talk","Manners","Forget “please” or “thank you” and take a sip."],
-  ["talk","Whisper zone","Everyone must whisper. Raise your voice and sip."],
-  ["talk","Movie line","Every play must come with a movie quote. No quote, no play."],
-  ["talk","Banned letter","The President bans a letter. Any word starting with it costs a sip."],
-  ["talk","Catchphrase","The President picks a catchphrase. Whoever clears the pile must shout it."],
-  ["talk","Boom","Playing a 2 requires a loud “BOOM.” Forget and sip."],
-  ["talk","Opposite day","Yes means no and no means yes until the pile clears twice."],
-  ["talk","Narrator","The player left of the President narrates everyone's turns in a nature-documentary voice."],
-  ["talk","President says","The President's commands only count if they start with “President says.” Follow a fake one and sip."],
-  ["talk","Over and out","End every sentence with “over,” like a radio. Forget and sip."],
-  ["talk","Robot mode","Everyone talks like a robot until the next round."],
-  ["talk","No “you”","The word “you” is banned. Point with your elbow instead."],
-  ["talk","Hashtag","End every sentence with a hashtag, spoken out loud."],
-  ["talk","Ye olde","Everyone speaks like Shakespeare. Thee, thou, and forsooth."],
-  ["talk","Good vibes only","No complaining about your cards. Complain and sip."],
-  ["talk","Trash talk","Trash talk is mandatory before every play. Keep it friendly."],
-  ["talk","Echo","Repeat the last word the previous player said before you speak."],
-  ["talk","Sing it","Anyone down to one card must sing “last card” to a tune of their choice."],
-  ["talk","Speechwriter","Before each round, the Asshole gives a 10-second speech praising the President."],
-  ["talk","Name that card","Name the card you're playing in a foreign language. Any language."],
-  ["talk","Slow talker","Everyone speaks slowly and dramatically. Talk fast and sip."],
-  ["talk","Weather report","Announce your mood as a weather forecast before you play."],
-  ["talk","Sir and ma'am","Address everyone at the table as sir or ma'am."],
-  ["talk","Shush","Nobody may speak while the President is playing a card."],
-  ["talk","Pun-ishment","Whoever clears the pile must make a pun. A groan from the table means a sip."],
+  ["talk","No first names","Nobody may say anyone's first name. Slip up and take a sip.","Nicknames, last names and pointing are all fine; first names aren't, and that includes your own. Whoever catches a slip calls it out, and the person who said the name sips."],
+  ["talk","Swear jar","Every curse word costs a sip.","Every curse word counts, even mild ones and even muttered, as long as someone hears it. Each word is its own sip, so a string of three costs three."],
+  ["talk","The D-word","The word “drink” is banned. Call it “a sip of freedom” instead.","Don't say “drink,” “drinks” or “drinking.” Say “a sip of freedom” instead. Say the banned word and you sip, and you still have to call it a sip of freedom."],
+  ["talk","Pirate law","Everyone talks like a pirate until the next President takes office.","Everyone talks like a pirate: “arr,” “matey,” “aye” for yes. It ends when this round is over and the next President is crowned. Talk like a landlubber and sip."],
+  ["talk","The royal we","Everyone refers to themselves only as “we.” Say “I” and sip.","Say “we,” “us” and “our” instead of “I,” “me” and “my”: “We shall play a pair.” Saying “I” or “me” costs a sip."],
+  ["talk","Third person","Everyone refers to themselves by name in the third person.","Talk about yourself by your own name: “Sam passes,” not “I pass.” Say “I,” “me” or “my” and sip."],
+  ["talk","No yes, no no","The words “yes” and “no” are banned. Find another way.","“Yeah,” “nope,” “sure” and nodding all work. The words “yes” and “no” don't. Say either one and sip."],
+  ["talk","Question master","The President is question master. Answer any question they ask and you sip, unless you reply with a question of your own.","If the President asks you a question and you answer it, you sip. Dodge by answering with a question of your own (“Why do you ask?”). Watch for sneaky ones like “Whose turn is it?”"],
+  ["talk","Questions only","Everyone may only speak in questions. Make a statement and sip.","Every sentence must be a question: “Should I play my 9?” Even passing has to be asked (“Pass?”). Make a statement and sip."],
+  ["talk","Accent decree","The President picks an accent. Everyone speaks in it.","The President names an accent (British, cowboy, pirate, anything). Everyone uses it whenever they speak, the President included. Drop it and sip."],
+  ["talk","No numbers","Nobody may say a number out loud, including card ranks. Show your cards instead.","Don't say any number out loud, card ranks included: no “three,” no “pair of nines.” Lay your cards down to show what you're playing. Saying a number costs a sip."],
+  ["talk","Mr. President","The President must be addressed as “Mr. President” or “Madam President.”","Whenever you talk to or about the President, call them “Mr. President” or “Madam President.” Using their name, or just “you,” costs a sip."],
+  ["talk","Your Majesty","Every sentence spoken to the President must begin with “Your Majesty.”","Anything you say to the President has to start with “Your Majesty”: “Your Majesty, it's your turn.” Forget and sip."],
+  ["talk","Compliment tax","Before you play a card, pay someone a compliment.","Before you put down any card, give someone at the table a compliment, a different person each time if you can. Passing is free. Play without paying the tax and sip."],
+  ["talk","Sportscaster","Announce every card you play like a play-by-play commentator.","Call your own play like a sports commentator: “And she drops a pair of Kings! The crowd goes wild!” Play without commentary and sip."],
+  ["talk","Manners","Forget “please” or “thank you” and take a sip.","Ask with “please” and answer with “thank you,” for cards, drinks, anything. Get caught forgetting and sip."],
+  ["talk","Whisper zone","Everyone must whisper. Raise your voice and sip.","Everyone talks in a whisper, even when excited. Laughing is allowed, but talk at normal volume and you sip."],
+  ["talk","Movie line","Every play must come with a movie quote. No quote, no play.","Say a movie quote every time you play cards. No quote, no play: you have to pass instead. Repeats are allowed but expect groans."],
+  ["talk","Banned letter","The President bans a letter. Any word starting with it costs a sip.","The President picks a letter. Any word starting with it costs a sip, every time. Common letters like S or T make it brutal; Q or X make it easy."],
+  ["talk","Catchphrase","The President picks a catchphrase. Whoever clears the pile must shout it.","The President picks a catchphrase, like “Bingo!” Whoever clears the pile, by a 2 or because everyone passed, shouts it right away. Forget and sip."],
+  ["talk","Boom","Playing a 2 requires a loud “BOOM.” Forget and sip.","Every time you play a 2, or a pair of them, shout “BOOM.” If the table catches you forgetting, you sip."],
+  ["talk","Opposite day","Yes means no and no means yes until the pile clears twice.","Everyone answers the opposite of what they mean, so “no” means yes. It ends after the pile has cleared twice. Answer straight and sip."],
+  ["talk","Narrator","The player left of the President narrates everyone's turns in a nature-documentary voice.","The player to the President's left describes every turn like a nature documentary: “The Asshole, sensing danger, plays a lonely 4.” If the narrator goes quiet, they sip."],
+  ["talk","President says","The President's commands only count if they start with “President says.” Follow a fake one and sip.","Like Simon Says: the President's orders only count when they start with “President says.” Obey an order without it, or ignore a real one, and you sip."],
+  ["talk","Over and out","End every sentence with “over,” like a radio. Forget and sip.","End everything you say with “over,” like a walkie-talkie. Finish a sentence without it and sip."],
+  ["talk","Robot mode","Everyone talks like a robot until the next round.","Talk in a flat robot voice, beeps welcome. It ends when this round is over and the next deal starts. Slip into your normal voice and sip."],
+  ["talk","No “you”","The word “you” is banned. Point with your elbow instead.","Don't say the word “you.” To mean someone, point at them with your elbow. Say “you” and sip, and finger-pointing doesn't count."],
+  ["talk","Hashtag","End every sentence with a hashtag, spoken out loud.","Finish every sentence with a spoken hashtag: “I pass, hashtag blessed.” Forget and sip."],
+  ["talk","Ye olde","Everyone speaks like Shakespeare. Thee, thou, and forsooth.","Talk like Shakespeare: thee, thou, doth, forsooth, “I prithee, play thy card.” Modern talk costs a sip."],
+  ["talk","Good vibes only","No complaining about your cards. Complain and sip.","No grumbling about your hand, the deal or your luck. Big sighs count if the table says so. Complain and sip."],
+  ["talk","Trash talk","Trash talk is mandatory before every play. Keep it friendly.","Before every play, say something cocky but friendly: “Enjoy your last turn as Vice President.” Play without trash talk and sip. No real insults."],
+  ["talk","Echo","Repeat the last word the previous player said before you speak.","Before you say anything, repeat the last word the previous speaker said. Forget and sip."],
+  ["talk","Sing it","Anyone down to one card must sing “last card” to a tune of their choice.","When you're down to your last card, sing “last card” to any tune. If someone catches you holding one card without singing, you sip."],
+  ["talk","Speechwriter","Before each round, the Asshole gives a 10-second speech praising the President.","Before every deal, the Asshole gives a 10-second speech praising the President. If the President isn't impressed, the Asshole sips."],
+  ["talk","Name that card","Name the card you're playing in a foreign language. Any language.","When you play, name the card in another language: “dos” for a 2, “roi” for a King. Any language counts. Say it in English and sip."],
+  ["talk","Slow talker","Everyone speaks slowly and dramatically. Talk fast and sip.","Everyone talks slowly and dramatically, like a movie villain. Talk at normal speed and the table can make you sip."],
+  ["talk","Weather report","Announce your mood as a weather forecast before you play.","Before each play, describe your mood as a forecast: “Cloudy, with a chance of pairs.” Skip the forecast and sip."],
+  ["talk","Sir and ma'am","Address everyone at the table as sir or ma'am.","Call everyone “sir” or “ma'am” whenever you talk to them, the President included. Forget and sip."],
+  ["talk","Shush","Nobody may speak while the President is playing a card.","When it's the President's turn, nobody talks until their cards are down or they pass. Break the silence and sip."],
+  ["talk","Pun-ishment","Whoever clears the pile must make a pun. A groan from the table means a sip.","Whoever clears the pile makes a pun right away, ideally about cards. If anyone groans, the punner sips. Fake groans count."],
   // Body
-  ["body","Thumb master","The President can put a thumb on the table at any time. Last to copy sips."],
-  ["body","Heaven","The President points to the sky whenever they like. Last to point up sips."],
-  ["body","No pointing","No pointing with fingers. Elbows only."],
-  ["body","Wrong hand","Everyone drinks with their non-dominant hand."],
-  ["body","Pinky out","Pinkies up whenever you sip. Forget and sip again."],
-  ["body","Salute","Salute the President before you play a card."],
-  ["body","The bow","Bow your head when you speak to the President."],
-  ["body","Stand for 2s","Anyone who plays a 2 must stand up and take a bow."],
-  ["body","Cheers first","You must clink glasses with someone before any sip."],
-  ["body","Forehead card","The Asshole plays one round with a card stuck to their forehead."],
-  ["body","Viking","The President can start rowing a Viking ship. Everyone joins. Last one rowing sips."],
-  ["body","Freeze","The President freezes. Everyone freezes. Last to freeze sips."],
-  ["body","Nose goes","The President touches their nose. Last to copy sips."],
-  ["body","Hands off","No touching your face. Touch it and sip."],
-  ["body","No elbows","No elbows on the table."],
-  ["body","Dance break","Before you play a 2 you have to do a dance move."],
-  ["body","High five","When the pile clears, high-five the player on your left."],
-  ["body","T-rex","Play your cards with T-rex arms until the pile clears."],
-  ["body","Stand to speak","You have to stand up to talk."],
-  ["body","Knock knock","Knock twice on the table before every play."],
-  ["body","Wink","Wink at someone every time you play. Get caught not winking and sip."],
-  ["body","Chicken pass","Flap your arms like a chicken when you pass."],
-  ["body","Card hand","Hold your drink in the same hand as your cards."],
-  ["body","Silent applause","Jazz hands after the President plays."],
-  ["body","Mirror","The Asshole copies every move the President makes."],
-  ["body","Slow motion","Everyone plays their cards in slow motion."],
-  ["body","Hands up","Last player to raise their hands when the President says “stick 'em up” sips."],
-  ["body","Arm wrestle","The President can challenge anyone to a thumb war. Loser sips."],
-  ["body","Seat of power","The Asshole must stand for the whole next round."],
-  ["body","Head tap","Tap your head before you pass. Forget and sip."],
+  ["body","Thumb master","The President can put a thumb on the table at any time. Last to copy sips.","Whenever they like, the President quietly rests a thumb on the table. Everyone who notices copies. The last person to put a thumb down sips. The sneakier, the better."],
+  ["body","Heaven","The President points to the sky whenever they like. Last to point up sips.","Whenever they like, the President points at the sky. Everyone copies. The last person to point up sips."],
+  ["body","No pointing","No pointing with fingers. Elbows only.","Keep your fingers folded. Point with an elbow, a nod or your chin instead. Point with a finger and sip."],
+  ["body","Wrong hand","Everyone drinks with their non-dominant hand.","Hold your drink in your non-dominant hand every time you sip, so lefties use their right. Get caught using your usual hand and sip again."],
+  ["body","Pinky out","Pinkies up whenever you sip. Forget and sip again.","Lift your pinky every time you drink, like at a fancy tea party. Forget and you take another sip, pinky up this time."],
+  ["body","Salute","Salute the President before you play a card.","Before you play any card, salute the President. Passing doesn't need a salute. Forget and sip."],
+  ["body","The bow","Bow your head when you speak to the President.","Bow your head a little whenever you speak to the President. Talk to them head held high and sip."],
+  ["body","Stand for 2s","Anyone who plays a 2 must stand up and take a bow.","Whenever you play a 2, stand up and take a bow before sitting back down. Forget and sip."],
+  ["body","Cheers first","You must clink glasses with someone before any sip.","Before any sip, clink glasses with someone. Sip without a cheers and you sip again, with a cheers this time."],
+  ["body","Forehead card","The Asshole plays one round with a card stuck to their forehead.","For the next round, the Asshole pulls one card from their hand without looking and holds it to their forehead, face out. Everyone else can see it; the Asshole can't. They can still play it."],
+  ["body","Viking","The President can start rowing a Viking ship. Everyone joins. Last one rowing sips.","Whenever they like, the President starts rowing an invisible Viking ship. Everyone joins in. The last person to start rowing sips."],
+  ["body","Freeze","The President freezes. Everyone freezes. Last to freeze sips.","When the President freezes mid-move, everyone freezes too. The last person to freeze sips, and nobody moves until the President does."],
+  ["body","Nose goes","The President touches their nose. Last to copy sips.","Whenever they like, the President touches their nose. Everyone copies. The last person to touch their nose sips."],
+  ["body","Hands off","No touching your face. Touch it and sip.","Don't touch your own face: no chin resting, scratching or pushing up glasses. Get caught and sip."],
+  ["body","No elbows","No elbows on the table.","Keep your elbows off the table. Get caught and sip."],
+  ["body","Dance break","Before you play a 2 you have to do a dance move.","Before you play a 2, bust out a dance move. Anything counts, from a shimmy to the sprinkler. Play a 2 without dancing and sip."],
+  ["body","High five","When the pile clears, high-five the player on your left.","Whenever you clear the pile, high-five the player on your left before you lead again. Forget and sip."],
+  ["body","T-rex","Play your cards with T-rex arms until the pile clears.","Tuck your elbows against your sides and play with short T-rex arms until the pile clears. Reach normally and sip."],
+  ["body","Stand to speak","You have to stand up to talk.","You have to stand up to say anything at all. Talk while sitting and sip."],
+  ["body","Knock knock","Knock twice on the table before every play.","Knock twice on the table before you play cards. Passing doesn't need a knock. Forget and sip."],
+  ["body","Wink","Wink at someone every time you play. Get caught not winking and sip.","Every time you play cards, wink at someone. If anyone notices a play without a wink, you sip."],
+  ["body","Chicken pass","Flap your arms like a chicken when you pass.","Instead of saying “pass,” flap your arms like a chicken. Clucking is optional. Pass without flapping and sip."],
+  ["body","Card hand","Hold your drink in the same hand as your cards.","When you drink, use the hand holding your cards, without putting the cards down. Drink with your free hand and sip again."],
+  ["body","Silent applause","Jazz hands after the President plays.","Every time the President plays, everyone gives silent jazz hands. Forget and sip."],
+  ["body","Mirror","The Asshole copies every move the President makes.","The Asshole copies everything the President does: scratching, sipping, leaning, stretching. If the President catches them not mirroring, the Asshole sips."],
+  ["body","Slow motion","Everyone plays their cards in slow motion.","Play your cards in slow motion, slow-motion faces encouraged. Play at normal speed and sip."],
+  ["body","Hands up","Last player to raise their hands when the President says “stick 'em up” sips.","Whenever the President says “stick 'em up,” everyone raises both hands. The last one with their hands up sips."],
+  ["body","Arm wrestle","The President can challenge anyone to a thumb war. Loser sips.","Whenever they like, the President can challenge anyone to a thumb war (one, two, three, four, I declare a thumb war). The loser sips, even if it's the President."],
+  ["body","Seat of power","The Asshole must stand for the whole next round.","The Asshole stays standing for the whole next round, from the deal to the last card. Sitting down costs a sip."],
+  ["body","Head tap","Tap your head before you pass. Forget and sip.","Tap the top of your head before you say “pass.” Pass without a tap and sip."],
   // Table & cards
-  ["table","Pass tax","Every pass costs a sip."],
-  ["table","Skip sip","Anyone who gets skipped sips."],
-  ["table","Bomb","Four of a kind clears the pile, and everyone else sips."],
-  ["table","Revolution","Four of a kind flips the card order. Low cards win until the pile clears."],
-  ["table","Slap","When the same rank is played twice in a row, slap the table. Last to slap sips."],
-  ["table","Jokers wild","Jokers go in the deck and count as any card."],
-  ["table","Two clears","A 2 clears the pile, and everyone else sips."],
-  ["table","Singles only","Only single cards may be played this round."],
-  ["table","Pair bonus","Play a pair and give out a sip."],
-  ["table","Last card","Announce “last card” when you're down to one. Forget and sip."],
-  ["table","Shot clock","Take more than 10 seconds to play and sip."],
-  ["table","Jack reverse","A Jack reverses the direction of play."],
-  ["table","Crazy 8s","An 8 skips the next player."],
-  ["table","Seven gives","Play a 7 and give out a sip."],
-  ["table","Queen questions","Whoever plays a Queen becomes question master until the pile clears."],
-  ["table","Ace cheers","When an Ace is played, everybody cheers."],
-  ["table","Butler duty","The Asshole deals, collects, and shuffles every round."],
-  ["table","Show one","The Asshole plays with one card face up on the table."],
-  ["table","Double swap","The Asshole gives the President 3 cards instead of 2 next round."],
-  ["table","No 2s first","Nobody may lead with a 2."],
-  ["table","Runs allowed","Straights of 3 or more cards may be played, and must be beaten by a higher straight of the same length."],
-  ["table","Same suit","Play the same suit as the card below you and give out a sip."],
-  ["table","Illegal play","Play out of turn or play an illegal card and take 2 sips."],
-  ["table","No 2 finish","You can't go out on a 2. Try it and you drop to Asshole."],
-  ["table","Complete it","If someone plays 3 of a rank, the holder of the 4th may jump in out of turn."],
-  ["table","Leftovers","When the round ends, the last player sips once for each card left."],
-  ["table","Speed round","Everyone plays as fast as possible. Hesitate and sip."],
-  ["table","Face down","The next pile is played face down. Anyone can call “liar.” Wrong guesses sip."],
-  ["table","Pass it on","Before the round, everyone passes one card to the left."],
-  ["table","Low leads","The lowest card in anyone's hand leads the next round."],
+  ["table","Pass tax","Every pass costs a sip.","Each time you say pass, take a sip, whether you could have played or not. If your table already sips on passes, it's two."],
+  ["table","Skip sip","Anyone who gets skipped sips.","Whenever your turn gets skipped, by a same-rank play, a Crazy 8 or any other rule, you sip."],
+  ["table","Bomb","Four of a kind clears the pile, and everyone else sips.","Playing four of the same rank clears the pile no matter what's on it, and everyone except the bomber sips. The bomber leads next."],
+  ["table","Revolution","Four of a kind flips the card order. Low cards win until the pile clears.","When someone plays four of a kind, the card order flips: 3s are now high and 2s are low. It flips back when the pile clears."],
+  ["table","Slap","When the same rank is played twice in a row, slap the table. Last to slap sips.","When the same rank is played twice in a row, like a 7 on a 7, everyone slaps the table. The last hand down sips, and so does anyone who slaps at the wrong time."],
+  ["table","Jokers wild","Jokers go in the deck and count as any card.","Shuffle two jokers into the deck. A joker can stand in for any card, so a 9 and a joker make a pair of 9s. On its own, a joker can be played as anything, even a 2."],
+  ["table","Two clears","A 2 clears the pile, and everyone else sips.","A 2, or a set of them, clears the pile on the spot, and everyone except the player who played it sips. That player leads the next pile."],
+  ["table","Singles only","Only single cards may be played this round.","For the rest of this round, every play is a single card: no pairs, triples or four of a kind. Normal play comes back next round."],
+  ["table","Pair bonus","Play a pair and give out a sip.","Whenever you play a pair, two of the same rank, give one sip to anyone you choose."],
+  ["table","Last card","Announce “last card” when you're down to one. Forget and sip.","When you're down to one card, say “last card” before the next player plays. If someone catches you first, you sip."],
+  ["table","Shot clock","Take more than 10 seconds to play and sip.","On your turn you have 10 seconds to play or pass. Anyone can count you down out loud. Run out of time and sip."],
+  ["table","Jack reverse","A Jack reverses the direction of play.","Playing a Jack, or a set of Jacks, reverses the direction of play, so the next turn goes back the other way."],
+  ["table","Crazy 8s","An 8 skips the next player.","When an 8 is played, the next player in line is skipped."],
+  ["table","Seven gives","Play a 7 and give out a sip.","Each 7 you play lets you give one sip to anyone you choose, so a pair of 7s gives out two."],
+  ["table","Queen questions","Whoever plays a Queen becomes question master until the pile clears.","Play a Queen and you're question master until the pile clears: anyone who answers a question you ask sips, unless they answer with a question."],
+  ["table","Ace cheers","When an Ace is played, everybody cheers.","Whenever an Ace hits the table, everyone raises a glass and shouts “cheers.” The last to cheer sips."],
+  ["table","Butler duty","The Asshole deals, collects, and shuffles every round.","Whoever is Asshole collects the cards after every round, shuffles and deals. Nobody else touches the deck."],
+  ["table","Show one","The Asshole plays with one card face up on the table.","The Asshole picks one card from their hand and lays it face up on the table for everyone to see. It stays there until they play it."],
+  ["table","Double swap","The Asshole gives the President 3 cards instead of 2 next round.","At the next card swap, the Asshole hands over their 3 best cards instead of 2, and the President gives back 3 cards they don't want."],
+  ["table","No 2s first","Nobody may lead with a 2.","You can't start a pile with a 2 or a set of 2s. Lead with something else. If 2s are all you have left, you can lead them."],
+  ["table","Runs allowed","Straights of 3 or more cards may be played, and must be beaten by a higher straight of the same length.","You can play a straight of 3 or more ranks in a row, like 5-6-7. Suits don't matter. To beat it, play a higher straight of the same length, like 6-7-8."],
+  ["table","Same suit","Play the same suit as the card below you and give out a sip.","If you play a single card of the same suit as the card it lands on, give one sip to anyone you like."],
+  ["table","Illegal play","Play out of turn or play an illegal card and take 2 sips.","Playing out of turn, playing too low, or playing the wrong number of cards costs 2 sips. The cards go back into your hand."],
+  ["table","No 2 finish","You can't go out on a 2. Try it and you drop to Asshole.","Your last card can't be a 2. Go out on a 2 anyway and you're the Asshole for the next round, no matter when you finished. Play your 2s earlier."],
+  ["table","Complete it","If someone plays 3 of a rank, the holder of the 4th may jump in out of turn.","When three of the same rank are on the pile, whoever holds the fourth can slam it down right away, even out of turn. That completes the set, clears the pile, and they lead next."],
+  ["table","Leftovers","When the round ends, the last player sips once for each card left.","When the round ends, the last player still holding cards, the new Asshole, sips once for every card left in their hand."],
+  ["table","Speed round","Everyone plays as fast as possible. Hesitate and sip.","Play as fast as you can: no thinking out loud, no rearranging your hand. Anyone can call out a hesitation, and the slowpoke sips."],
+  ["table","Face down","The next pile is played face down. Anyone can call “liar.” Wrong guesses sip.","For the next pile, play your cards face down and say what they are. You can bluff. Anyone can call “liar” and flip them: a caught bluffer sips, and a wrong accuser sips."],
+  ["table","Pass it on","Before the round, everyone passes one card to the left.","Next round, after the deal and the card swap, everyone picks one card and passes it face down to the player on their left, all at the same time."],
+  ["table","Low leads","The lowest card in anyone's hand leads the next round.","Next round, the President doesn't lead. Whoever holds the 3♣ leads instead and has to play it, just like the first round of the game."],
   // Social
-  ["social","Nicknames","The President gives everyone a nickname. Use real names and sip."],
-  ["social","Drinking buddy","The President picks a buddy for someone. When one sips, both sip."],
-  ["social","Buddy chain","Everyone is buddied to the person on their right. One sip becomes a chain."],
-  ["social","Refill duty","The Asshole keeps the President's drink topped up."],
-  ["social","Butler","The Asshole fetches snacks for the President on request."],
-  ["social","Fan club","The Vice President cheers loudly whenever the President plays."],
-  ["social","Bathroom pass","Leaving the table costs a sip. The President grants the pass."],
-  ["social","Phone jail","Touch your phone and sip. Phones go face down in the middle."],
-  ["social","Eye contact","Keep eye contact when you cheers. Look away and sip again."],
-  ["social","Truth","The President asks one player a question. Answer honestly or sip."],
-  ["social","Hot seat","One player answers rapid-fire questions from everyone for 30 seconds."],
-  ["social","Toast","The President proposes a toast. Everyone joins."],
-  ["social","Handshake","The President and VP invent a secret handshake and do it every time the pile clears."],
-  ["social","Story time","Everyone adds one sentence to a story each time they play."],
-  ["social","Theme song","The President picks a song. Hum it every time they play."],
-  ["social","Compliment circle","Go around the table. Everyone compliments the player on their left."],
-  ["social","Friendly roast","The Asshole gets one gentle roast from each player."],
-  ["social","Hype man","Each player hypes up the next player before they play."],
-  ["social","Quiet Asshole","The Asshole may only speak when spoken to."],
-  ["social","Team name","The table has one minute to agree on a team name. Fail and everyone sips."],
-  ["social","Waiter","The Asshole takes everyone's drink order before the next round."],
-  ["social","Selfie","Group photo, right now. Last one in the frame sips."],
-  ["social","Pledge","Before the deal, everyone recites a loyalty pledge the President writes."],
-  ["social","Life advice","The Asshole gives the President one piece of life advice. The President decides if it's good."],
-  ["social","Impressions","Everyone does an impression of the President. The President picks the best."],
+  ["social","Nicknames","The President gives everyone a nickname. Use real names and sip.","The President gives everyone at the table a nickname, themselves included. From then on, use only nicknames. Say a real name and sip."],
+  ["social","Drinking buddy","The President picks a buddy for someone. When one sips, both sip.","The President pairs one player with a buddy. From now on, whenever either of them sips, the other sips too."],
+  ["social","Buddy chain","Everyone is buddied to the person on their right. One sip becomes a chain.","Everyone is linked to the player on their right. When you sip, they sip, then the player on their right, and so on around the table until it gets back to you."],
+  ["social","Refill duty","The Asshole keeps the President's drink topped up.","The Asshole keeps the President's glass topped up with whatever they're drinking, water included. If the President's glass runs dry, the Asshole sips."],
+  ["social","Butler","The Asshole fetches snacks for the President on request.","Whenever the President asks for a snack, the Asshole fetches it. Refuse and sip."],
+  ["social","Fan club","The Vice President cheers loudly whenever the President plays.","Every time the President plays, the Vice President cheers loudly, like their biggest fan. A missing or weak cheer costs the Vice President a sip."],
+  ["social","Bathroom pass","Leaving the table costs a sip. The President grants the pass.","Before you leave the table, ask the President for a pass, then take a sip on your way out. That's the price of the pass."],
+  ["social","Phone jail","Touch your phone and sip. Phones go face down in the middle.","Everyone puts their phone face down in the middle of the table. Pick yours up or touch it and sip. Real emergencies are excused."],
+  ["social","Eye contact","Keep eye contact when you cheers. Look away and sip again.","When you clink glasses, keep eye contact with the other person until you've both sipped. Look away and you sip again."],
+  ["social","Truth","The President asks one player a question. Answer honestly or sip.","Once, right away: the President asks one player any question. They answer honestly or take a sip instead. Keep it fun, not mean."],
+  ["social","Hot seat","One player answers rapid-fire questions from everyone for 30 seconds.","Once, right away: the President picks someone for the hot seat. For 30 seconds everyone fires quick questions, and they answer on the spot. Freeze or refuse and sip."],
+  ["social","Toast","The President proposes a toast. Everyone joins.","Once, right away: the President raises a toast to anything they like, and everyone clinks glasses and sips together."],
+  ["social","Handshake","The President and VP invent a secret handshake and do it every time the pile clears.","The President and Vice President make up a secret handshake. Every time a pile clears, they do it. Forget it or botch it and both sip."],
+  ["social","Story time","Everyone adds one sentence to a story each time they play.","The table builds one story together: every time you play cards, add one sentence. Freeze up or play without adding a sentence and sip."],
+  ["social","Theme song","The President picks a song. Hum it every time they play.","The President picks their theme song. Whenever the President plays, everyone hums a few bars. Forget and sip."],
+  ["social","Compliment circle","Go around the table. Everyone compliments the player on their left.","Once, right away: go around the table, and each player gives the person on their left a real compliment. A lazy compliment can be booed into a sip."],
+  ["social","Friendly roast","The Asshole gets one gentle roast from each player.","Once, right away: every player gives the Asshole one gentle roast. Keep it light. The Asshole has to take it with a smile, no comebacks until everyone's done."],
+  ["social","Hype man","Each player hypes up the next player before they play.","Before each player's turn, the player before them hypes them up: “Here comes the legend!” Forget to hype and sip."],
+  ["social","Quiet Asshole","The Asshole may only speak when spoken to.","The Asshole can't speak unless someone speaks to them first. Talk out of turn and sip."],
+  ["social","Team name","The table has one minute to agree on a team name. Fail and everyone sips.","Once, right away: the whole table has one minute to agree on a team name. If the minute runs out without one everyone agrees on, everyone sips."],
+  ["social","Waiter","The Asshole takes everyone's drink order before the next round.","Once, before the next round: the Asshole takes everyone's drink order, water included, and brings it."],
+  ["social","Selfie","Group photo, right now. Last one in the frame sips.","Once, right away: take a group photo with everyone in it. The last person to squeeze into the frame sips."],
+  ["social","Pledge","Before the deal, everyone recites a loyalty pledge the President writes.","The President writes a short loyalty pledge. Before every deal, everyone recites it out loud. Mumble or skip it and sip."],
+  ["social","Life advice","The Asshole gives the President one piece of life advice. The President decides if it's good.","Once, right away: the Asshole gives the President one piece of life advice. If the President decides it's bad advice, the Asshole sips."],
+  ["social","Impressions","Everyone does an impression of the President. The President picks the best.","Once, right away: everyone takes a turn doing their best impression of the President. The President picks the best, and that player gets bragging rights."],
   // Drink mechanics
-  ["sips","Social","Everyone sips. Just because."],
-  ["sips","Give 3","The President hands out 3 sips however they like."],
-  ["sips","Double down","All sips count double until the pile clears."],
-  ["sips","Half off","All penalties are cut in half until the next President."],
-  ["sips","Water counts","Anyone may take water instead of a sip for the rest of the game."],
-  ["sips","Hydration break","Everyone drinks a glass of water. Presidential orders."],
-  ["sips","Snake eyes","The President is the snake. Make eye contact with them and sip."],
-  ["sips","Shield","The Vice President gets one shield to block any sip."],
-  ["sips","Guardian angel","The President names someone who may cancel one sip for anyone."],
-  ["sips","Split it","Any penalty may be split with a willing partner."],
-  ["sips","Across the table","Whenever someone sips, the player across from them sips too."],
-  ["sips","Rule of three","Every third pass at the table is a sip."],
-  ["sips","Sommelier","Before sipping, describe your drink like a wine expert."],
-  ["sips","Security detail","When the President sips, the Vice President sips too."],
-  ["sips","Short waterfall","The President starts a waterfall. Stop only when the person before you stops."],
-  ["sips","Cheers on clear","Every time the pile clears, the table cheers."],
-  ["sips","Owed","The Asshole owes the President one sip, to be collected at any time."],
-  ["sips","Mercy","The Asshole may pass one sip to the Vice Asshole."],
-  ["sips","Refund","If the President breaks their own rule, they sip double."],
-  ["sips","Tip jar","Every time you clear the pile, give a sip to anyone you like."],
+  ["sips","Social","Everyone sips. Just because.","Once, right away: everyone at the table takes a sip together. That's it."],
+  ["sips","Give 3","The President hands out 3 sips however they like.","Once, right away: the President hands out 3 sips however they like, all to one person or spread around."],
+  ["sips","Double down","All sips count double until the pile clears.","Until the current pile clears, every penalty counts double: one sip becomes two."],
+  ["sips","Half off","All penalties are cut in half until the next President.","Until a new President takes office, every penalty is cut in half: 2 sips become 1, and 1 sip becomes a little one."],
+  ["sips","Water counts","Anyone may take water instead of a sip for the rest of the game.","For the rest of the game, anyone can take a sip of water instead of their drink, for any penalty, no questions asked."],
+  ["sips","Hydration break","Everyone drinks a glass of water. Presidential orders.","Once, right away: everyone drinks a glass of water. Presidential orders."],
+  ["sips","Snake eyes","The President is the snake. Make eye contact with them and sip.","The President is the snake. Anyone who makes eye contact with the President sips. The President will try to catch your eye, so look carefully."],
+  ["sips","Shield","The Vice President gets one shield to block any sip.","The Vice President gets one shield. Once, at any time, they can block a sip for themselves or anyone else. After that it's gone."],
+  ["sips","Guardian angel","The President names someone who may cancel one sip for anyone.","The President names a guardian angel. Once, the angel can cancel any one sip for anyone at the table, themselves included. Then the power is gone."],
+  ["sips","Split it","Any penalty may be split with a willing partner.","Whenever you have to sip, you can ask someone to share it. If they agree, you each take half. Nobody has to agree."],
+  ["sips","Across the table","Whenever someone sips, the player across from them sips too.","Whenever someone sips, the player sitting directly across from them sips too. With an odd number of players, the President decides who counts as across."],
+  ["sips","Rule of three","Every third pass at the table is a sip.","Keep a running count of passes: every third pass at the table is a sip for whoever said it. The count carries over between piles."],
+  ["sips","Sommelier","Before sipping, describe your drink like a wine expert.","Before every sip, describe your drink like a wine expert: “Notes of oak and regret.” Sip without describing it and sip again."],
+  ["sips","Security detail","When the President sips, the Vice President sips too.","Every time the President sips, the Vice President sips too, like a bodyguard taking the hit."],
+  ["sips","Short waterfall","The President starts a waterfall. Stop only when the person before you stops.","Once, right away: the President starts drinking, then each player in order around the table. You can't stop until the person before you stops. The President should keep it short."],
+  ["sips","Cheers on clear","Every time the pile clears, the table cheers.","Every time a pile clears, everyone raises a glass and cheers. The last to cheer sips."],
+  ["sips","Owed","The Asshole owes the President one sip, to be collected at any time.","The Asshole owes the President one sip. The President can call it in any time this game, even rounds later, and the Asshole sips on the spot."],
+  ["sips","Mercy","The Asshole may pass one sip to the Vice Asshole.","Once, when the Asshole has to sip, they can hand that sip to the Vice Asshole instead."],
+  ["sips","Refund","If the President breaks their own rule, they sip double.","If the President breaks one of their own rules, they sip twice instead of once."],
+  ["sips","Tip jar","Every time you clear the pile, give a sip to anyone you like.","Every time you clear the pile, give one sip to anyone you like."],
   // Presidential power
-  ["power","Veto","The President repeals any rule currently in effect."],
-  ["power","Exile","The Asshole sits in the worst seat at the table."],
-  ["power","Throne","The President picks the best seat in the house."],
-  ["power","Executive order","Once per round, the President can make any player sip."],
-  ["power","Pardon","The President forgives one penalty, for anyone."],
-  ["power","Tariff","Anyone who plays on top of the President's cards sips."],
-  ["power","Term limits","A President who wins 3 rounds in a row must make a rule that hurts themselves."],
-  ["power","State of the Union","The President gives a speech before the next deal. Heckling costs a sip."],
-  ["power","Cabinet pick","The Vice President may also make one rule."],
-  ["power","Filibuster","The President talks for 30 seconds. Nobody may play until they stop."],
-  ["power","Presidential seal","The President's glass is never empty. That's the Asshole's job."],
-  ["power","Bill of rights","Everyone gets one immunity card for the rest of the game."],
-  ["power","Martial law","No talking during play. Break it and sip."],
-  ["power","Trade deal","After the card swap, the President may swap one more card with anyone."],
-  ["power","Impeachment","If the table votes unanimously, the President sips twice."],
-  ["power","Line of succession","If the President leaves the table, the VP takes over."],
-  ["power","Rewrite history","The President changes one existing rule's wording."],
-  ["power","Emergency powers","The President picks two rules from the favorites list."],
-  ["power","Midterms","After 3 rounds, the table votes out one active rule."],
-  ["power","Diplomatic immunity","The President is immune to all rules for one round."],
+  ["power","Veto","The President repeals any rule currently in effect.","Once, right away: the President picks any rule in effect and cancels it. Tap Repeal on it under Rules in effect."],
+  ["power","Exile","The Asshole sits in the worst seat at the table.","The Asshole moves to the worst seat at the table: the wobbly chair, the corner, the floor cushion. The President decides which seat is worst."],
+  ["power","Throne","The President picks the best seat in the house.","The President picks the best seat at the table, and whoever's sitting there swaps with them."],
+  ["power","Executive order","Once per round, the President can make any player sip.","Once each round, the President can point at any player and make them sip. No reason needed."],
+  ["power","Pardon","The President forgives one penalty, for anyone.","Once, the President cancels one penalty for any player, themselves included."],
+  ["power","Tariff","Anyone who plays on top of the President's cards sips.","Anyone who plays on top of the President's cards sips. Beating the President has a price."],
+  ["power","Term limits","A President who wins 3 rounds in a row must make a rule that hurts themselves.","If the same person wins 3 rounds in a row as President, they have to make a new rule that works against them, like “The President sips on every pass.”"],
+  ["power","State of the Union","The President gives a speech before the next deal. Heckling costs a sip.","Once, before the next deal: the President gives a speech about the state of the table. Anyone who heckles or interrupts sips."],
+  ["power","Cabinet pick","The Vice President may also make one rule.","Once, right away: the Vice President gets to make one rule of their own, on top of the President's."],
+  ["power","Filibuster","The President talks for 30 seconds. Nobody may play until they stop.","Whenever they like, the President can start a 30-second speech about anything. Nobody plays a card until it's over. Play during the filibuster and sip."],
+  ["power","Presidential seal","The President's glass is never empty. That's the Asshole's job.","The President's glass must never be empty. Keeping it full is the Asshole's job, and if it ever runs dry, the Asshole sips."],
+  ["power","Bill of rights","Everyone gets one immunity card for the rest of the game.","Everyone gets one free pass to use any time before the game ends. When you'd have to sip for any reason, say “Bill of rights” and skip that one penalty. Each player gets just one, so hand out coins or bottle caps to turn in when they're used."],
+  ["power","Martial law","No talking during play. Break it and sip.","From the first card of a round until the round ends, nobody talks. Gestures are fine. Talk during play and sip."],
+  ["power","Trade deal","After the card swap, the President may swap one more card with anyone.","After each card swap, the President can trade one more card with any player: draw one card at random from their hand, then give them back any card."],
+  ["power","Impeachment","If the table votes unanimously, the President sips twice.","Anyone can call a vote at any time. If every other player votes to impeach, the President sips twice. One “no” vote saves them."],
+  ["power","Line of succession","If the President leaves the table, the VP takes over.","If the President leaves the table, even for a minute, the Vice President takes over all their powers until they're back."],
+  ["power","Rewrite history","The President changes one existing rule's wording.","Once, right away: the President picks one rule in effect and rewrites its wording. The new version replaces the old one."],
+  ["power","Emergency powers","The President picks two rules from the favorites list.","Once, right away: the President enacts two more rules from the ★ favorites in the Rules tab, or any two if there are no favorites yet."],
+  ["power","Midterms","After 3 rounds, the table votes out one active rule.","After 3 more rounds, everyone votes on one rule in effect to cancel. Majority wins, and the President breaks ties."],
+  ["power","Diplomatic immunity","The President is immune to all rules for one round.","For the next round, the President doesn't have to follow any rule in effect. Everyone else still does."],
   // Mini-games
-  ["mini","Categories","The President names a category. Go around naming things in it. First to blank sips."],
-  ["mini","Rhyme time","The President says a word. Go around rhyming. First to fail sips."],
-  ["mini","Never have I ever","One round of three fingers. First to put all three down sips."],
-  ["mini","Most likely to","The President asks “who's most likely to…” and everyone points on three. Most votes sips."],
-  ["mini","Word association","Go around the table fast. Hesitate or repeat and sip."],
-  ["mini","Buzz","Count upward around the table. Say “buzz” for any multiple of 7 or number with a 7. Mess up and sip."],
-  ["mini","Two truths and a lie","The Asshole tells two truths and a lie. Anyone who guesses wrong sips."],
-  ["mini","Rock, paper, scissors","President vs. Asshole, best of three. Loser sips."],
-  ["mini","Staring contest","President vs. Vice President. First to blink sips."],
-  ["mini","Hum that tune","The President hums a song. First to guess it gives out 2 sips."],
-  ["mini","Alphabet","Name something in a category starting with A, then B, then C around the table. Stumble and sip."],
-  ["mini","Would you rather","The President asks a would-you-rather. The minority sips."],
-  ["mini","Guess the card","The President draws a card. Everyone guesses red or black. Wrong guesses sip."],
-  ["mini","Higher or lower","The President flips a card. Each player guesses if the next is higher or lower. Wrong guesses sip."],
-  ["mini","Spelling bee","The President names a word for the Asshole to spell. Miss a letter and sip."],
-  ["mini","Hot potato","Pass a card around while the President counts to a secret number. Holding it at the end means a sip."],
-  ["mini","Charades","The Asshole acts out a movie. The table has 30 seconds, or the Asshole sips."],
-  ["mini","Fact or fiction","The President states a fact. Everyone votes true or false. Wrong side sips."],
+  ["mini","Categories","The President names a category. Go around naming things in it. First to blank sips.","Once, right away: the President names a category, like beer brands. Going around the table, each player names something in it. The first to blank, repeat or hesitate too long sips."],
+  ["mini","Rhyme time","The President says a word. Go around rhyming. First to fail sips.","Once, right away: the President says a word, like “cat.” Going around the table, each player says a rhyme. The first to fail or repeat one sips."],
+  ["mini","Never have I ever","One round of three fingers. First to put all three down sips.","Once, right away: everyone holds up three fingers. Taking turns, each player says something they've never done, and anyone who has done it puts a finger down. The first with no fingers left sips."],
+  ["mini","Most likely to","The President asks “who's most likely to…” and everyone points on three. Most votes sips.","Once, right away: the President asks “Who's most likely to…?” On three, everyone points at someone. Whoever gets the most fingers sips, and ties all sip."],
+  ["mini","Word association","Go around the table fast. Hesitate or repeat and sip.","Once, right away: someone says a word, and going around fast, each player says the first word it brings to mind. Hesitate, repeat a word or make no sense and sip."],
+  ["mini","Buzz","Count upward around the table. Say “buzz” for any multiple of 7 or number with a 7. Mess up and sip.","Once, right away: count up around the table, one number each. Say “buzz” instead of any multiple of 7 (14, 21) or any number with a 7 in it (17, 27). Mess up and sip."],
+  ["mini","Two truths and a lie","The Asshole tells two truths and a lie. Anyone who guesses wrong sips.","Once, right away: the Asshole says three things about themselves, two true and one false. Everyone guesses the lie, and wrong guessers sip."],
+  ["mini","Rock, paper, scissors","President vs. Asshole, best of three. Loser sips.","Once, right away: the President and the Asshole play rock, paper, scissors, best of three. The loser sips."],
+  ["mini","Staring contest","President vs. Vice President. First to blink sips.","Once, right away: the President and Vice President stare each other down. The first to blink or look away sips."],
+  ["mini","Hum that tune","The President hums a song. First to guess it gives out 2 sips.","Once, right away: the President hums a song. Whoever names it first gives out 2 sips, to one person or split up."],
+  ["mini","Alphabet","Name something in a category starting with A, then B, then C around the table. Stumble and sip.","Once, right away: pick a category. Going around the table, each player names something in it starting with the next letter: apple, banana, cherry… Stumble or stall and sip."],
+  ["mini","Would you rather","The President asks a would-you-rather. The minority sips.","Once, right away: the President asks a would-you-rather question and everyone answers at once by pointing left or right. The smaller group sips. A tie means nobody does."],
+  ["mini","Guess the card","The President draws a card. Everyone guesses red or black. Wrong guesses sip.","Once, before the next deal or with a spare deck: the President holds up the top card face down. Everyone calls red or black, then it's flipped. Wrong calls sip."],
+  ["mini","Higher or lower","The President flips a card. Each player guesses if the next is higher or lower. Wrong guesses sip.","Once, before the next deal or with a spare deck: the President flips a card. Going around, each player guesses whether the next card will be higher or lower, then flips it. Wrong guesses sip. 2s are high."],
+  ["mini","Spelling bee","The President names a word for the Asshole to spell. Miss a letter and sip.","Once, right away: the President picks a real word and the Asshole spells it out loud. Get any letter wrong and sip."],
+  ["mini","Hot potato","Pass a card around while the President counts to a secret number. Holding it at the end means a sip.","Once, right away: the President secretly picks a number and counts out loud while a card is passed hand to hand around the table. Whoever holds the card when the count hits the number sips."],
+  ["mini","Charades","The Asshole acts out a movie. The table has 30 seconds, or the Asshole sips.","Once, right away: the Asshole acts out a movie without talking. The table has 30 seconds to guess it. If nobody does, the Asshole sips."],
+  ["mini","Fact or fiction","The President states a fact. Everyone votes true or false. Wrong side sips.","Once, right away: the President states a fact that may or may not be true. Everyone votes true or false at the same time, and the wrong side sips. A phone can settle it."],
   // Wild
-  ["wild","Musical chairs","Everyone moves one seat to the left."],
-  ["wild","Mime","Play your cards in total silence, miming everything."],
-  ["wild","Invisible player","The President creates an invisible player. Everyone must wait for them to “play.”"],
-  ["wild","Floor is lava","When the President says “lava,” feet off the floor. Last one sips."],
-  ["wild","Off hand","Hold your cards in your non-dominant hand."],
-  ["wild","Dress code","Everyone puts on a silly hat, or whatever's nearby, until the round ends."],
-  ["wild","Dramatic reading","Read any rule out loud like a movie trailer voice."],
-  ["wild","Dad jokes","Clear the pile, tell a dad joke. If nobody groans, you sip."],
-  ["wild","Villain laugh","Every time you play a 2, do your best villain laugh."],
-  ["wild","Unicorn","The President can shout “unicorn” at any time. Last to make a horn with their hand sips."],
-  ["wild","Tourist","The Asshole must take a photo of every pile clear."],
-  ["wild","Weather man","The Vice President forecasts who will go out next. Wrong forecast, they sip."],
-  ["wild","Soundtrack","The President picks the music for the next round."],
-  ["wild","Wrong names","Everyone must call each other by the wrong name. Say the right one and sip."],
-  ["wild","Commentary booth","Two players sit out a turn to commentate the play."],
+  ["wild","Musical chairs","Everyone moves one seat to the left.","Once, right away: everyone takes their cards and drink and moves one seat to the left. Play continues in seat order."],
+  ["wild","Mime","Play your cards in total silence, miming everything.","Play in total silence and mime everything: passing, celebrating, complaining. Make a sound and sip."],
+  ["wild","Invisible player","The President creates an invisible player. Everyone must wait for them to “play.”","The President adds an invisible player to the table and names them. On their turn, everyone waits a few seconds while they “play.” They always pass. Skip their turn and sip."],
+  ["wild","Floor is lava","When the President says “lava,” feet off the floor. Last one sips.","Whenever the President shouts “lava,” everyone lifts their feet off the floor. The last one with feet on the ground sips."],
+  ["wild","Off hand","Hold your cards in your non-dominant hand.","Hold your cards in your non-dominant hand. Switch back and sip."],
+  ["wild","Dress code","Everyone puts on a silly hat, or whatever's nearby, until the round ends.","Everyone puts on something silly, like a hat, sunglasses or a scarf, whatever's nearby, and keeps it on until this round ends. Take it off early and sip."],
+  ["wild","Dramatic reading","Read any rule out loud like a movie trailer voice.","Whenever anyone reads a rule out loud, they use an epic movie-trailer voice: “In a world where nobody says yes…” Read it plainly and sip."],
+  ["wild","Dad jokes","Clear the pile, tell a dad joke. If nobody groans, you sip.","Whoever clears the pile tells a dad joke. If nobody groans, the joke flopped and the teller sips."],
+  ["wild","Villain laugh","Every time you play a 2, do your best villain laugh.","Every time you play a 2, give your best evil villain laugh. Forget and sip."],
+  ["wild","Unicorn","The President can shout “unicorn” at any time. Last to make a horn with their hand sips.","Whenever the President shouts “unicorn,” everyone puts a fist to their forehead with one finger up like a horn. The last one to make a horn sips."],
+  ["wild","Tourist","The Asshole must take a photo of every pile clear.","Every time a pile clears, the Asshole takes a photo of it, like a tourist. Miss one and sip."],
+  ["wild","Weather man","The Vice President forecasts who will go out next. Wrong forecast, they sip.","Before anyone goes out each round, the Vice President forecasts who'll go out first. After each player goes out, they forecast the next one. Every wrong forecast costs them a sip."],
+  ["wild","Soundtrack","The President picks the music for the next round.","The President picks the music for the next round. Nobody else touches the playlist."],
+  ["wild","Wrong names","Everyone must call each other by the wrong name. Say the right one and sip.","Call everyone by the wrong name, anything except their real one. Say someone's real name and sip."],
+  ["wild","Commentary booth","Two players sit out a turn to commentate the play.","Once, right away: the President picks two players to skip their next turn and commentate the play like sports announcers. They're back in on the following turn."],
 ];
 
 // ---------- state ----------
@@ -412,7 +420,7 @@ const RANK_ICON = { pres:"👑", vp:"🎖️", cit:"🙂", va:"🫠", ass:"🚽"
 
 let state = load(KEY) || { phase:"setup", count:5, names:["","","","","","","","","",""], style:"pa", clearOnNew:false, players:[], rounds:[], laws:[], tab:"game" };
 let prefs = load(PREFS) || { favs:{}, custom:[], mode:"boost", cat:"all", q:"", onlyFav:false };
-let entry = null, drawn = null, lastDraws = [];
+let entry = null, drawn = null, lastDraws = [], howOpen = new Set();
 let confirmKey = null, confirmTimer = null;
 
 function load(k){ try{ const s = localStorage.getItem(k); return s ? JSON.parse(s) : null; }catch(e){ return null; } }
@@ -425,7 +433,7 @@ const R = () => RANKS[state.style] || RANKS.pa;
 const N = i => esc(state.players[i]);
 
 function allRules(){
-  return RULES.map(([c,t,d]) => ({ id:slug(t), c, t, d })).concat(prefs.custom.map(r => ({ ...r, custom:true })));
+  return RULES.map(([c,t,d,x]) => ({ id:slug(t), c, t, d, x })).concat(prefs.custom.map(r => ({ ...r, custom:true })));
 }
 function ruleById(id){ return allRules().find(r => r.id === id); }
 
@@ -567,7 +575,7 @@ function gameView(){
 
   const laws = state.laws.length ? `<div class="panel"><div class="row"><h2 class="grow">Rules in effect</h2><button class="small ghost" data-act="clearLaws" id="clearLaws">${confirmKey==="clearLaws"?"Tap to confirm":"Clear all"}</button></div>
     <div class="active">${state.laws.map((l,i) => { const r = ruleById(l.id); if (!r) return "";
-      return `<div class="law"><span class="lt">${esc(r.t)}</span><span class="ld">${esc(r.d)}</span>
+      return `<div class="law"><span class="lt">${esc(r.t)}</span><span class="ld">${esc(r.d)}</span>${how(r, "law")}
         <span class="lm">${l.by!=null?`Enacted by ${N(l.by)}`:"Enacted"}${l.round?` · round ${l.round}`:" · before round 1"}</span>
         <button class="small" id="repeal-${i}" data-act="repeal" data-i="${i}">Repeal</button></div>`; }).join("")}</div></div>` : "";
 
@@ -597,7 +605,7 @@ function drawnCard(){
   if (drawn.empty) return `<div class="err">No rules match. Add some favorites or switch the draw to the whole deck.</div>`;
   const on = state.laws.some(l => l.id === drawn.id), fav = !!prefs.favs[drawn.id];
   return `<div class="drawn" aria-live="polite"><span class="cat">${drawn.auto?"Chosen for the President · ":""}${CATS[drawn.c]||"Custom"}${drawn.custom?" · house rule":""}</span>
-    <span class="rt">${esc(drawn.t)}</span><span class="rd">${esc(drawn.d)}</span>
+    <span class="rt">${esc(drawn.t)}</span><span class="rd">${esc(drawn.d)}</span>${drawn.x?`<span class="rx"><b>How it works:</b> ${esc(drawn.x)}</span>`:""}
     <div class="btnrow"><button class="go" data-act="enact" data-id="${drawn.id}" id="enactDrawn" ${on?"disabled":""}>${on?"In effect":"Enact it"}</button>
     <button data-act="fav" data-id="${drawn.id}" id="favDrawn" aria-pressed="${fav}">${fav?"★ Favorited":"☆ Favorite"}</button></div></div>`;
 }
@@ -686,6 +694,7 @@ function rulesView(){
     <button class="primary" data-act="draw" id="drawRules">${drawn?"Draw another":"Draw a rule"}</button>
     ${decideRow()}
     <p class="hint">${drawModeText()} Draws skip rules already in effect and the last 12 you've seen.</p>
+    <p class="hint">Tap “How it works” under any rule for the details. Rules last until they're repealed unless they say otherwise, and breaking one costs a sip. One-time rules happen right away; repeal them afterward.</p>
   </div>
   <div class="panel">
     <input type="search" id="q" placeholder="Search rules" value="${esc(prefs.q)}" autocomplete="off" aria-label="Search rules">
@@ -703,16 +712,22 @@ function rulesView(){
     <p class="hint">House rules and favorites stay on this phone, even when you start a new game.</p>
   </div>`;
 }
+// "How it works" under a rule, folded; which ones are open survives the re-render after every tap
+function how(r, where){
+  if (!r.x) return "";
+  const k = where + ":" + r.id;
+  return `<details class="how" data-how="${esc(k)}" ${howOpen.has(k)?"open":""}><summary>How it works</summary><p>${esc(r.x)}</p></details>`;
+}
 function ruleList(){
   const q = prefs.q.trim().toLowerCase(), active = new Set(state.laws.map(l=>l.id));
   let list = allRules();
   if (prefs.cat === "custom") list = list.filter(r=>r.custom); else if (prefs.cat !== "all") list = list.filter(r=>r.c===prefs.cat);
   if (prefs.onlyFav) list = list.filter(r=>prefs.favs[r.id]);
-  if (q) list = list.filter(r => (r.t+" "+r.d).toLowerCase().includes(q));
+  if (q) list = list.filter(r => (r.t+" "+r.d+" "+(r.x||"")).toLowerCase().includes(q));
   if (!list.length) return `<p class="hint" style="padding:12px 0">No rules match.</p>`;
   return list.map(r => `<div class="ritem">
     <button class="star" data-act="fav" data-id="${r.id}" id="star-${r.id}" aria-pressed="${!!prefs.favs[r.id]}" aria-label="Favorite ${esc(r.t)}">${prefs.favs[r.id]?"★":"☆"}</button>
-    <div><div class="c">${CATS[r.c]||""}${r.custom?" · house rule":""}</div><div class="t">${esc(r.t)}</div><div class="d">${esc(r.d)}</div></div>
+    <div><div class="c">${CATS[r.c]||""}${r.custom?" · house rule":""}</div><div class="t">${esc(r.t)}</div><div class="d">${esc(r.d)}</div>${how(r, "deck")}</div>
     <div style="display:flex;flex-direction:column;gap:6px;align-items:flex-end">
       <button class="en" data-act="${active.has(r.id)?"repealId":"enact"}" data-id="${r.id}" id="en-${r.id}" aria-pressed="${active.has(r.id)}">${active.has(r.id)?"In effect":"Enact"}</button>
       ${r.custom?`<button class="small ghost" data-act="delCustom" data-id="${r.id}" id="del-${r.id}" style="font-size:12px">${confirmKey==="dc-"+r.id?"Confirm":"Delete"}</button>`:""}
@@ -825,6 +840,7 @@ document.addEventListener("click", e => {
     case "delCustom": { const id = b.dataset.id; confirmThen("dc-"+id, ()=>{ prefs.custom = prefs.custom.filter(r=>r.id!==id); delete prefs.favs[id]; state.laws = state.laws.filter(l=>l.id!==id); savePrefs(); save(); render(); }); break; }
   }
 });
+document.addEventListener("toggle", e => { const k = e.target.dataset && e.target.dataset.how; if (k){ if (e.target.open) howOpen.add(k); else howOpen.delete(k); } }, true);
 document.addEventListener("input", e => {
   const t = e.target;
   if (t.dataset.name != null){ state.names[+t.dataset.name] = t.value; save(); }
