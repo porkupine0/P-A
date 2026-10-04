@@ -93,6 +93,16 @@ textarea{min-height:70px;resize:vertical}
 .law .lm{font-size:12px;color:var(--muted);grid-column:1}
 .law button{grid-row:1 / 5;grid-column:2;align-self:center}
 .law .how{grid-column:1}
+.sheet{position:fixed;inset:0;z-index:40;background:var(--bg);overflow-y:auto;-webkit-overflow-scrolling:touch;overscroll-behavior:contain;padding:calc(10px + env(safe-area-inset-top,0px)) 16px calc(28px + env(safe-area-inset-bottom,0px))}
+.sin{max-width:600px;margin:0 auto;display:flex;flex-direction:column;gap:12px}
+.shead{display:flex;align-items:flex-start;gap:12px;position:sticky;top:calc(-10px - env(safe-area-inset-top,0px));z-index:1;background:var(--bg);padding:10px 0 8px}
+.shead h2{margin:0}
+.pkcats{flex-wrap:nowrap;overflow-x:auto;padding-bottom:4px;scrollbar-width:none}
+.pkcats::-webkit-scrollbar{display:none}
+.pkcats .chip{white-space:nowrap;flex:none}
+.ritem.pk{grid-template-columns:1fr auto}
+.ritem.pk .en[disabled]{background:var(--gold);color:var(--gold-ink);border-color:var(--gold);opacity:1}
+.pkh{margin:14px 0 2px;font-size:13px;text-transform:uppercase;letter-spacing:.08em;color:var(--muted)}
 .how summary{cursor:pointer;font-size:13px;font-weight:700;color:var(--gold);list-style:none;display:inline-flex;align-items:center;gap:4px;padding:4px 0;min-height:28px}
 .how summary::-webkit-details-marker{display:none}
 .how summary::before{content:"▸";transition:transform .15s}
@@ -420,7 +430,7 @@ const RANK_ICON = { pres:"👑", vp:"🎖️", cit:"🙂", va:"🫠", ass:"🚽"
 
 let state = load(KEY) || { phase:"setup", count:5, names:["","","","","","","","","",""], style:"pa", clearOnNew:false, players:[], rounds:[], laws:[], tab:"game" };
 let prefs = load(PREFS) || { favs:{}, custom:[], mode:"boost", cat:"all", q:"", onlyFav:false };
-let entry = null, drawn = null, lastDraws = [], howOpen = new Set();
+let entry = null, drawn = null, lastDraws = [], howOpen = new Set(), picker = null;
 let confirmKey = null, confirmTimer = null;
 
 function load(k){ try{ const s = localStorage.getItem(k); return s ? JSON.parse(s) : null; }catch(e){ return null; } }
@@ -504,7 +514,7 @@ function startClock(){
   clock = { left:30, t:setInterval(() => {
     clock.left--;
     const el = document.getElementById("clockNum"); if (el) el.textContent = clock.left;
-    if (clock.left <= 0){ stopClock(); pickForMe(); render(); }
+    if (clock.left <= 0){ stopClock(); picker = null; pickForMe(); render(); }
   }, 1000) };
 }
 
@@ -514,7 +524,8 @@ function render(){
   const focusId = document.activeElement && document.activeElement.id;
   const y = window.scrollY;
   const tab = state.phase === "setup" && state.tab === "game" ? "setup" : state.tab;
-  app.innerHTML = topBar() + (tab === "setup" ? setupView() : tab === "game" ? gameView() : tab === "rules" ? rulesView() : guideView());
+  app.innerHTML = topBar() + (tab === "setup" ? setupView() : tab === "game" ? gameView() : tab === "rules" ? rulesView() : guideView()) + (picker ? pickerView() : "");
+  document.body.style.overflow = picker ? "hidden" : "";
   if (focusId){ const el = document.getElementById(focusId); if (el) el.focus({preventScroll:true}); }
   window.scrollTo(0, y);
 }
@@ -569,7 +580,7 @@ function gameView(){
 
   const drawBox = `<div class="panel"><div class="row"><h2 class="grow">${rk?`${N(presidentNow())}, make a rule`:"Make a rule"}</h2></div>
     ${drawnCard()}
-    <div class="btnrow"><button class="primary" data-act="draw" id="drawGame">${drawn?"Draw another":"Draw a rule"}</button></div>
+    <div class="btnrow"><button class="primary" data-act="draw" id="drawGame">${drawn?"Draw another":"Draw a rule"}</button><button data-act="pkOpen" id="pickGame">📖 Choose a rule</button></div>
     ${decideRow()}
     <p class="hint">${drawModeText()} <a href="#" data-act="tab" data-v="rules" style="color:var(--gold)">Browse the deck</a></p></div>`;
 
@@ -604,7 +615,7 @@ function drawnCard(){
   if (!drawn) return "";
   if (drawn.empty) return `<div class="err">No rules match. Add some favorites or switch the draw to the whole deck.</div>`;
   const on = state.laws.some(l => l.id === drawn.id), fav = !!prefs.favs[drawn.id];
-  return `<div class="drawn" aria-live="polite"><span class="cat">${drawn.auto?"Chosen for the President · ":""}${CATS[drawn.c]||"Custom"}${drawn.custom?" · house rule":""}</span>
+  return `<div class="drawn" aria-live="polite"><span class="cat">${drawn.auto?"Chosen for the President · ":drawn.picked?"Picked from the deck · ":""}${CATS[drawn.c]||"Custom"}${drawn.custom?" · house rule":""}</span>
     <span class="rt">${esc(drawn.t)}</span><span class="rd">${esc(drawn.d)}</span>${drawn.x?`<span class="rx"><b>How it works:</b> ${esc(drawn.x)}</span>`:""}
     <div class="btnrow"><button class="go" data-act="enact" data-id="${drawn.id}" id="enactDrawn" ${on?"disabled":""}>${on?"In effect":"Enact it"}</button>
     <button data-act="fav" data-id="${drawn.id}" id="favDrawn" aria-pressed="${fav}">${fav?"★ Favorited":"☆ Favorite"}</button></div></div>`;
@@ -711,6 +722,34 @@ function rulesView(){
     ${prefs.addErr?`<div class="err">${esc(prefs.addErr)}</div>`:""}
     <p class="hint">House rules and favorites stay on this phone, even when you start a new game.</p>
   </div>`;
+}
+// Choosing a rule from the deck: a full-screen list over the game, with search, categories and favorites first.
+// Enact puts the rule in effect for the current President and shows it on the gold card.
+function pickerView(){
+  const favs = allRules().filter(r => prefs.favs[r.id]).length, custom = prefs.custom.length;
+  const cats = [["all","All"], ...(favs ? [["fav","★ Favorites"]] : []), ...Object.entries(CATS), ...(custom ? [["custom","House rules"]] : [])];
+  const pres = presidentNow();
+  return `<div class="sheet" role="dialog" aria-modal="true" aria-label="Choose a rule"><div class="sin">
+    <div class="shead"><div class="grow"><h2>Choose a rule</h2><span class="hint">${pres != null ? `${esc(N(pres))} picks. ` : ""}Tap Enact to put it in effect.</span></div><button class="small ghost" data-act="pkClose" id="pkClose">Close</button></div>
+    <input type="search" id="pkq" placeholder="Search rules" value="${esc(picker.q)}" autocomplete="off" aria-label="Search rules">
+    <div class="chips pkcats" role="group" aria-label="Category">${cats.map(([k,l]) => `<button class="chip" data-act="pkCat" data-v="${k}" id="pkc-${k}" aria-pressed="${picker.cat===k}">${l}</button>`).join("")}</div>
+    <div class="rlist" id="pklist">${pickerList()}</div></div></div>`;
+}
+function pickerList(){
+  const q = picker.q.trim().toLowerCase(), active = new Set(state.laws.map(l => l.id));
+  let list = allRules();
+  if (picker.cat === "fav") list = list.filter(r => prefs.favs[r.id]);
+  else if (picker.cat === "custom") list = list.filter(r => r.custom);
+  else if (picker.cat !== "all") list = list.filter(r => r.c === picker.cat);
+  if (q) list = list.filter(r => (r.t+" "+r.d+" "+(r.x||"")).toLowerCase().includes(q));
+  if (!list.length) return `<p class="hint" style="padding:12px 0">No rules match.</p>`;
+  const item = r => `<div class="ritem pk">
+    <div><div class="c">${prefs.favs[r.id] ? "★ " : ""}${CATS[r.c]||""}${r.custom?" · house rule":""}</div><div class="t">${esc(r.t)}</div><div class="d">${esc(r.d)}</div>${how(r, "pick")}</div>
+    <button class="en" data-act="pkEnact" data-id="${r.id}" id="pk-${r.id}" ${active.has(r.id)?`disabled aria-pressed="true">In effect`:`>Enact`}</button></div>`;
+  // with no search or category, favorites come first
+  const favs = !q && picker.cat === "all" ? list.filter(r => prefs.favs[r.id]) : [];
+  if (!favs.length) return list.map(item).join("");
+  return `<h3 class="pkh">★ Your favorites</h3>${favs.map(item).join("")}<h3 class="pkh">All rules</h3>${list.filter(r => !prefs.favs[r.id]).map(item).join("")}`;
 }
 // "How it works" under a rule, folded; which ones are open survives the re-render after every tap
 function how(r, where){
@@ -824,6 +863,11 @@ document.addEventListener("click", e => {
     case "pickForMe": pickForMe(); render(); break;
     case "clock": if (clock) stopClock(); else startClock(); render(); break;
     case "enact": enact(b.dataset.id); render(); break;
+    case "pkOpen": picker = { q:"", cat:"all" }; render(); break;
+    case "pkClose": picker = null; render(); break;
+    case "pkCat": picker.cat = b.dataset.v; render(); { const l = document.querySelector(".sheet"); if (l) l.scrollTop = 0; } break;
+    case "pkEnact": { const r = ruleById(b.dataset.id); if (!r) break; enact(r.id); drawn = { ...r, picked:true }; picker = null; render();
+      const card = document.querySelector(".drawn"); if (card) card.scrollIntoView({ block:"center" }); break; }
     case "repeal": state.laws.splice(+b.dataset.i,1); save(); render(); break;
     case "repealId": state.laws = state.laws.filter(l=>l.id!==b.dataset.id); save(); render(); break;
     case "clearLaws": confirmThen("clearLaws", ()=>{ state.laws = []; save(); render(); }); break;
@@ -840,11 +884,13 @@ document.addEventListener("click", e => {
     case "delCustom": { const id = b.dataset.id; confirmThen("dc-"+id, ()=>{ prefs.custom = prefs.custom.filter(r=>r.id!==id); delete prefs.favs[id]; state.laws = state.laws.filter(l=>l.id!==id); savePrefs(); save(); render(); }); break; }
   }
 });
+document.addEventListener("keydown", e => { if (e.key === "Escape" && picker){ picker = null; render(); } });
 document.addEventListener("toggle", e => { const k = e.target.dataset && e.target.dataset.how; if (k){ if (e.target.open) howOpen.add(k); else howOpen.delete(k); } }, true);
 document.addEventListener("input", e => {
   const t = e.target;
   if (t.dataset.name != null){ state.names[+t.dataset.name] = t.value; save(); }
   if (t.id === "q"){ prefs.q = t.value; savePrefs(); const l = document.getElementById("rlist"); if (l) l.innerHTML = ruleList(); }
+  if (t.id === "pkq" && picker){ picker.q = t.value; const l = document.getElementById("pklist"); if (l) l.innerHTML = pickerList(); }
 });
 
 /* hx:js:start */
